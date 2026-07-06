@@ -11,6 +11,14 @@ from pathlib import Path
 from typing import Any
 
 from .assistant_review import compute_assistant_evaluator_fitness, run_assistant_review
+from .gauntlet import (
+    materialize_probe_draft_files,
+    read_or_rebuild_gauntlet_history_index,
+    read_or_rebuild_probe_forge_drafts,
+    rebuild_gauntlet_history_index,
+    rebuild_probe_forge_drafts,
+    upsert_probe_request_decision,
+)
 from .model_catalog import CatalogModel, load_catalog
 from .preflight import preflight_catalog_entry, preflight_run_folder
 from .runner.probe_runner import ProbeRunner
@@ -29,14 +37,35 @@ def list_run_directories(repo_root: Path) -> list[dict[str, Any]]:
     for child in sorted(runs_root.iterdir(), key=lambda item: item.name):
         if not child.is_dir():
             continue
+        run_type = "gauntlet" if (child / "gauntlet_scores.json").exists() else "normal"
+        gauntlet_scores = (
+            json.loads((child / "gauntlet_scores.json").read_text(encoding="utf-8"))
+            if (child / "gauntlet_scores.json").exists()
+            else None
+        )
+        gauntlet_fingerprint = (
+            json.loads((child / "gauntlet_fingerprint.json").read_text(encoding="utf-8"))
+            if (child / "gauntlet_fingerprint.json").exists()
+            else None
+        )
         rows.append(
             {
                 "name": child.name,
                 "path": child.relative_to(repo_root).as_posix(),
+                "run_type": run_type,
                 "has_report": (child / "report.md").exists(),
                 "has_fingerprint": (child / "cognitive_fingerprint.json").exists(),
+                "has_gauntlet_summary": (child / "gauntlet_summary.md").exists(),
+                "has_gauntlet_fingerprint": (child / "gauntlet_fingerprint.json").exists(),
                 "has_assistant_review": (child / "assistant_review.md").exists()
                 or ((child / "assistant_reviews").exists() and any((child / "assistant_reviews").iterdir())),
+                "gauntlet_overall_score": (gauntlet_scores or {}).get("overall_score"),
+                "gauntlet_failure_bucket_counts": {
+                    "systemic": (gauntlet_fingerprint or {}).get("systemic_failures", 0),
+                    "soft": (gauntlet_fingerprint or {}).get("soft_failures", 0),
+                }
+                if gauntlet_fingerprint is not None
+                else None,
             }
         )
     return rows
@@ -282,8 +311,15 @@ def read_run_details(repo_root: Path, run_path: str) -> dict[str, Any]:
 
     return {
         "run_path": run_path,
+        "run_type": "gauntlet" if (run_dir / "gauntlet_scores.json").exists() else "normal",
         "fingerprint": read_json("cognitive_fingerprint.json"),
         "report_markdown": read_text("report.md"),
+        "gauntlet_fingerprint": read_json("gauntlet_fingerprint.json"),
+        "gauntlet_summary_markdown": read_text("gauntlet_summary.md"),
+        "gauntlet_scores": read_json("gauntlet_scores.json"),
+        "gauntlet_transcript": read_jsonl("gauntlet_transcript.jsonl"),
+        "gauntlet_failure_log": read_jsonl("gauntlet_failure_log.jsonl"),
+        "gauntlet_candidate_probe_requests": read_json("gauntlet_candidate_probe_requests.json"),
         "assistant_review_markdown": read_text("assistant_review.md"),
         "assistant_review_telemetry": read_json("assistant_review_telemetry.json"),
         "assistant_evaluator_fitness": (
@@ -525,6 +561,8 @@ def build_dashboard_status(repo_root: Path) -> dict[str, Any]:
             for path in sorted((repo_root / "configs" / "task_profiles").glob("*.json"))
         ],
         "runs": list_run_directories(repo_root),
+        "gauntlet_history_index": read_or_rebuild_gauntlet_history_index(repo_root),
+        "probe_forge_drafts": read_or_rebuild_probe_forge_drafts(repo_root),
         "assistant_fit_index": (
             json.loads(_assistant_fit_summary_index_path(repo_root).read_text(encoding="utf-8"))
             if _assistant_fit_summary_index_path(repo_root).exists()
@@ -877,6 +915,25 @@ DASHBOARD_HTML = """<!doctype html>
       <div id="assistantFitIndex" class="index-list">No assistant fit summaries yet.</div>
     </section>
     <section class="panel" style="margin-top: 20px;">
+      <h2>Gauntlet Variance Atlas</h2>
+      <div class="toolbar">
+        <div>
+          <label for="gauntletFamilySort">Sort failure families by</label>
+          <select id="gauntletFamilySort">
+            <option value="appearances">Appearances</option>
+            <option value="probe_needed_count">Probe Needed</option>
+            <option value="systemic_count">Systemic</option>
+            <option value="flaky_count">Flaky</option>
+            <option value="host_sensitive_count">Host-Sensitive</option>
+          </select>
+        </div>
+      </div>
+      <div id="gauntletModelAggregate" class="aggregate-grid">No gauntlet model history yet.</div>
+      <div id="gauntletFamilyAggregate" class="aggregate-grid">No gauntlet failure-family history yet.</div>
+      <div id="gauntletHistoryIndex" class="index-list">No gauntlet history entries yet.</div>
+      <div id="probeForgeDrafts" class="index-list">No forge drafts yet.</div>
+    </section>
+    <section class="panel" style="margin-top: 20px;">
       <h2>Run Detail</h2>
       <label for="detailRunSelect">Inspect run</label>
       <select id="detailRunSelect"></select>
@@ -941,6 +998,10 @@ DASHBOARD_HTML = """<!doctype html>
       renderJobs(data.jobs || []);
       renderAssistantFitIndex(data.assistant_fit_index || {entries: []});
       renderAssistantFitAggregate(data.assistant_fit_index || {aggregate: {}});
+      renderGauntletModelAggregate(data.gauntlet_history_index || {aggregate: {models: {}}});
+      renderGauntletFamilyAggregate(data.gauntlet_history_index || {aggregate: {failure_families: {}}});
+      renderGauntletHistoryIndex(data.gauntlet_history_index || {entries: []});
+      renderProbeForgeDrafts(data.probe_forge_drafts || {entries: []});
       const detailSelect = document.getElementById("detailRunSelect");
       if (detailSelect.value) {
         await loadRunDetail(detailSelect.value);
@@ -980,9 +1041,14 @@ DASHBOARD_HTML = """<!doctype html>
         <div class="run-item">
           <strong>${run.name}</strong><br>
           <span class="badge">${run.path}</span>
+          <span class="badge">${run.run_type}</span>
           <span class="badge">${run.has_report ? "report" : "no report"}</span>
           <span class="badge">${run.has_fingerprint ? "fingerprint" : "no fingerprint"}</span>
+          <span class="badge">${run.has_gauntlet_summary ? "gauntlet summary" : "no gauntlet summary"}</span>
           <span class="badge">${run.has_assistant_review ? "assistant review" : "no assistant review"}</span>
+          ${run.gauntlet_overall_score !== null && run.gauntlet_overall_score !== undefined
+            ? `<span class="badge">gauntlet score ${escapeHtml(String(run.gauntlet_overall_score))}</span>`
+            : ""}
         </div>
       `).join("");
     }
@@ -1061,6 +1127,118 @@ DASHBOARD_HTML = """<!doctype html>
       }).join("");
     }
 
+    function renderGauntletModelAggregate(indexPayload) {
+      const target = document.getElementById("gauntletModelAggregate");
+      const aggregate = (indexPayload.aggregate || {}).models || {};
+      const ids = Object.keys(aggregate).sort((a, b) => {
+        const av = aggregate[a].average_score ?? 0;
+        const bv = aggregate[b].average_score ?? 0;
+        if (bv !== av) {
+          return bv - av;
+        }
+        return a.localeCompare(b);
+      });
+      if (!ids.length) {
+        target.textContent = "No gauntlet model history yet.";
+        return;
+      }
+      target.innerHTML = ids.map(id => {
+        const item = aggregate[id];
+        return `
+          <div class="detail-card">
+            <h3>${escapeHtml(id)}</h3>
+            <div class="assistant-meta">Runs: ${escapeHtml(String(item.runs ?? 0))}</div>
+            <div class="assistant-meta">Avg Score: ${escapeHtml(String(item.average_score ?? 0))}</div>
+            <div class="assistant-meta">Systemic=${escapeHtml(String(item.systemic_failures ?? 0))} | Flaky=${escapeHtml(String(item.flaky_failures ?? 0))} | Host=${escapeHtml(String(item.host_sensitive_failures ?? 0))} | Soft=${escapeHtml(String(item.soft_failures ?? 0))}</div>
+            <div class="assistant-meta">Probe Needed: ${escapeHtml(String(item.probe_needed_count ?? 0))}</div>
+            <div class="assistant-meta">${escapeHtml(item.rationale || "")}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderGauntletFamilyAggregate(indexPayload) {
+      const target = document.getElementById("gauntletFamilyAggregate");
+      const aggregate = (indexPayload.aggregate || {}).failure_families || {};
+      const sortKey = document.getElementById("gauntletFamilySort").value;
+      const ids = Object.keys(aggregate).sort((a, b) => {
+        const av = aggregate[a][sortKey] ?? 0;
+        const bv = aggregate[b][sortKey] ?? 0;
+        if (bv !== av) {
+          return bv - av;
+        }
+        return a.localeCompare(b);
+      });
+      if (!ids.length) {
+        target.textContent = "No gauntlet failure-family history yet.";
+        return;
+      }
+      target.innerHTML = ids.map(id => {
+        const item = aggregate[id];
+        return `
+          <div class="detail-card">
+            <h3>${escapeHtml(id)}</h3>
+            <div class="assistant-meta">Appearances: ${escapeHtml(String(item.appearances ?? 0))}</div>
+            <div class="assistant-meta">Highest Severity: ${escapeHtml(String(item.highest_severity ?? "low"))}</div>
+            <div class="assistant-meta">Systemic=${escapeHtml(String(item.systemic_count ?? 0))} | Flaky=${escapeHtml(String(item.flaky_count ?? 0))} | Host=${escapeHtml(String(item.host_sensitive_count ?? 0))} | Soft=${escapeHtml(String(item.soft_count ?? 0))} | Observed=${escapeHtml(String(item.observed_only_count ?? 0))}</div>
+            <div class="assistant-meta">Probe Needed: ${escapeHtml(String(item.probe_needed_count ?? 0))} | Retry: ${escapeHtml(String(item.latest_retry_observation ?? "not_run"))}</div>
+            <div class="assistant-meta">Decision: ${escapeHtml(String(item.operator_decision ?? "unreviewed"))}</div>
+            <div class="assistant-meta">Models: ${escapeHtml((item.models_seen || []).join(", "))}</div>
+            <div class="assistant-meta">${escapeHtml(item.rationale || "")}</div>
+            <div class="assistant-meta">${escapeHtml(item.operator_note || "")}</div>
+            <div class="button-row">
+              <button onclick="setProbeRequestDecision('${escapeJs(id)}','monitor_only')">Monitor</button>
+              <button onclick="setProbeRequestDecision('${escapeJs(id)}','probe_candidate')">Candidate</button>
+              <button class="alt" onclick="setProbeRequestDecision('${escapeJs(id)}','confirmed_for_forge')">Confirm</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function renderGauntletHistoryIndex(indexPayload) {
+      const target = document.getElementById("gauntletHistoryIndex");
+      const entries = indexPayload.entries || [];
+      if (!entries.length) {
+        target.textContent = "No gauntlet history entries yet.";
+        return;
+      }
+      target.innerHTML = entries.map(entry => `
+        <div class="assistant-row">
+          <div>
+            <strong>${escapeHtml(entry.run_name)}</strong>
+            <div class="assistant-meta">${escapeHtml(entry.run_path)} | model=${escapeHtml(String(entry.model_name || "unknown"))} | gauntlet=${escapeHtml(String(entry.gauntlet_id || "unknown"))}</div>
+            <div class="assistant-meta">score=${escapeHtml(String(entry.overall_score ?? ""))} | weakest=${escapeHtml(String(entry.weakest_lane || "none"))} | repeated=${escapeHtml(String(entry.most_repeated_failure_family || "none"))}</div>
+            <div class="assistant-meta">retry=${escapeHtml(String(entry.retry_policy || "none"))} | systemic=${escapeHtml(String(entry.systemic_failures || 0))} | flaky=${escapeHtml(String(entry.flaky_failures || 0))} | host=${escapeHtml(String(entry.host_sensitive_failures || 0))} | soft=${escapeHtml(String(entry.soft_failures || 0))}</div>
+            <div class="assistant-meta">probe requests=${escapeHtml(String((entry.candidate_probe_requests || []).length))}</div>
+          </div>
+          <button class="alt" onclick="jumpToRun('${escapeJs(entry.run_path)}')">Open Run</button>
+        </div>
+      `).join("");
+    }
+
+    function renderProbeForgeDrafts(payload) {
+      const target = document.getElementById("probeForgeDrafts");
+      const entries = payload.entries || [];
+      if (!entries.length) {
+        target.textContent = "No forge drafts yet.";
+        return;
+      }
+      target.innerHTML = entries.map(entry => `
+        <div class="assistant-row">
+          <div>
+            <strong>${escapeHtml(entry.failure_family)}</strong>
+            <div class="assistant-meta">draft=${escapeHtml(entry.draft_id)} | priority=${escapeHtml(String(entry.priority))} | status=${escapeHtml(String(entry.status))}</div>
+            <div class="assistant-meta">runs=${escapeHtml(String(entry.source_run_count ?? 0))} | models=${escapeHtml((entry.source_models || []).join(", "))}</div>
+            <div class="assistant-meta">path=${escapeHtml(String(entry.materialized_probe_path || "not materialized"))}</div>
+            <div class="assistant-meta">${escapeHtml(entry.evidence_summary || "")}</div>
+            <div class="assistant-meta">turn focus: ${escapeHtml((entry.suggested_turn_focus || []).join(", "))}</div>
+            <div class="assistant-meta">${escapeHtml((entry.suggested_assertions || []).join(" | "))}</div>
+          </div>
+        </div>
+      `).join("");
+    }
+
     async function loadRunDetail(runPath) {
       const target = document.getElementById("runDetail");
       if (!runPath) {
@@ -1073,9 +1251,26 @@ DASHBOARD_HTML = """<!doctype html>
         target.innerHTML = `<div class="detail-card"><h3>Error</h3><div class="detail-pre">${data.error}</div></div>`;
         return;
       }
+      const runType = data.run_type || "normal";
       const fingerprint = data.fingerprint ? JSON.stringify(data.fingerprint, null, 2) : "No fingerprint found.";
       const failures = data.failure_log && data.failure_log.length ? JSON.stringify(data.failure_log, null, 2) : "No failure log entries.";
       const report = data.report_markdown || "No report found.";
+      const gauntletFingerprint = data.gauntlet_fingerprint
+        ? JSON.stringify(data.gauntlet_fingerprint, null, 2)
+        : "No gauntlet fingerprint found.";
+      const gauntletSummary = data.gauntlet_summary_markdown || "No gauntlet summary found.";
+      const gauntletScores = data.gauntlet_scores
+        ? JSON.stringify(data.gauntlet_scores, null, 2)
+        : "No gauntlet scores found.";
+      const gauntletFailures = data.gauntlet_failure_log && data.gauntlet_failure_log.length
+        ? JSON.stringify(data.gauntlet_failure_log, null, 2)
+        : "No gauntlet failure log entries.";
+      const gauntletTranscript = data.gauntlet_transcript && data.gauntlet_transcript.length
+        ? JSON.stringify(data.gauntlet_transcript, null, 2)
+        : "No gauntlet transcript found.";
+      const gauntletProbeRequests = data.gauntlet_candidate_probe_requests
+        ? JSON.stringify(data.gauntlet_candidate_probe_requests, null, 2)
+        : "No candidate probe requests found.";
       const assistantReview = data.assistant_review_markdown || "No assistant review found.";
       const assistantTelemetry = data.assistant_review_telemetry
         ? JSON.stringify(data.assistant_review_telemetry, null, 2)
@@ -1095,9 +1290,16 @@ DASHBOARD_HTML = """<!doctype html>
         ? JSON.stringify(data.assistant_fit_summary, null, 2)
         : "No persisted assistant fit summary found yet.";
       target.innerHTML = `
+        <div class="detail-card"><h3>Run Type</h3><div class="detail-pre">${escapeHtml(runType)}</div></div>
         <div class="detail-card"><h3>Fingerprint</h3><div class="detail-pre">${escapeHtml(fingerprint)}</div></div>
         <div class="detail-card"><h3>Failure Log</h3><div class="detail-pre">${escapeHtml(failures)}</div></div>
         <div class="detail-card"><h3>Report</h3><div class="detail-pre">${escapeHtml(report)}</div></div>
+        <div class="detail-card"><h3>Gauntlet Fingerprint</h3><div class="detail-pre">${escapeHtml(gauntletFingerprint)}</div></div>
+        <div class="detail-card"><h3>Gauntlet Summary</h3><div class="detail-pre">${escapeHtml(gauntletSummary)}</div></div>
+        <div class="detail-card"><h3>Gauntlet Scores</h3><div class="detail-pre">${escapeHtml(gauntletScores)}</div></div>
+        <div class="detail-card"><h3>Gauntlet Failure Log</h3><div class="detail-pre">${escapeHtml(gauntletFailures)}</div></div>
+        <div class="detail-card"><h3>Gauntlet Transcript</h3><div class="detail-pre">${escapeHtml(gauntletTranscript)}</div></div>
+        <div class="detail-card"><h3>Candidate Probe Requests</h3><div class="detail-pre">${escapeHtml(gauntletProbeRequests)}</div></div>
         <div class="detail-card"><h3>Assistant Review</h3><div class="detail-pre">${escapeHtml(assistantReview)}</div></div>
         <div class="detail-card"><h3>Assistant Telemetry</h3><div class="detail-pre">${escapeHtml(assistantTelemetry)}</div></div>
         <div class="detail-card"><h3>Evaluator Fitness</h3><div class="detail-pre">${escapeHtml(assistantFitness)}</div></div>
@@ -1270,6 +1472,20 @@ DASHBOARD_HTML = """<!doctype html>
       await loadStatus();
     }
 
+    async function setProbeRequestDecision(failureFamily, decision) {
+      let note = "";
+      if (decision === "confirmed_for_forge") {
+        note = prompt("Operator note for confirmed forge draft:", "") || "";
+      } else if (decision === "probe_candidate") {
+        note = prompt("Optional note for probe candidate:", "") || "";
+      }
+      await postJson("/api/probe-request-decision", {
+        failure_family: failureFamily,
+        decision: decision,
+        note: note
+      }, "runStatus");
+    }
+
     document.getElementById("preflightRun").addEventListener("click", () => postJson("/api/preflight-run", {
       model: document.getElementById("modelConfig").value
     }, "runStatus"));
@@ -1347,6 +1563,12 @@ DASHBOARD_HTML = """<!doctype html>
       fetch("/api/status")
         .then(response => response.json())
         .then(data => renderAssistantFitAggregate(data.assistant_fit_index || {aggregate: {}}));
+    });
+
+    document.getElementById("gauntletFamilySort").addEventListener("change", () => {
+      fetch("/api/status")
+        .then(response => response.json())
+        .then(data => renderGauntletFamilyAggregate(data.gauntlet_history_index || {aggregate: {failure_families: {}}}));
     });
 
     loadStatus();
@@ -1466,6 +1688,18 @@ class DashboardHandler(BaseHTTPRequestHandler):
 
                 job = self.job_manager.enqueue("assistant-review", payload, action)
                 self._send_json({"output": f"Assistant review queued: {job['job_id']}", "job": job})
+                return
+            if self.path == "/api/probe-request-decision":
+                upsert_probe_request_decision(
+                    self.repo_root,
+                    str(payload["failure_family"]),
+                    str(payload["decision"]),
+                    str(payload.get("note", "") or ""),
+                )
+                rebuild_gauntlet_history_index(self.repo_root)
+                rebuild_probe_forge_drafts(self.repo_root)
+                materialize_probe_draft_files(self.repo_root)
+                self._send_json({"output": f"Updated decision for {payload['failure_family']}: {payload['decision']}"})
                 return
         except Exception as exc:  # noqa: BLE001
             self._send_json({"error": str(exc), "output": f"Error: {exc}"}, status=HTTPStatus.BAD_REQUEST)

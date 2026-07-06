@@ -1,87 +1,96 @@
 # Zero-Knowledge User Manual
 
-This manual is written for someone who has never used this project before.
+This manual is for someone who has never touched this repo before.
 
 You do not need prior context about:
 
 - LLM benchmarking
 - GGUF files
 - `llama.cpp`
-- the repo layout
-- the earlier design conversations
+- the earlier design discussions
+- why the project changed direction
 
 If you can open a terminal and run commands, this guide is enough to get you moving.
 
-If you want the shortest possible path first, start with:
+If you want the shortest path first, start here:
 
 - [operator-quickstart.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/operator-quickstart.md)
 
+If you want the big-picture doctrine, read this too:
+
+- [negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md)
+
 ## What This Project Is
 
-`cognition-mesh-test-chamber` is a local evaluation harness for language models.
+`cognition-mesh-test-chamber` is a local suitability engine for language models.
 
-It does not try to answer:
+It is designed to answer:
 
-- "Which model is best in general?"
-- "Who is number one on a leaderboard?"
+- is this specific model suitable for this specific kind of work?
+- what breaks when it is pressured?
+- which failures repeat?
+- what containment should the host enforce?
+- does the evidence justify a new probe?
 
-It tries to answer:
+It is not designed to answer:
 
-- "Is this specific model suitable for this specific kind of work?"
-- "What goes wrong when it fails?"
-- "What containment or guardrails does it need?"
+- which model is best in general?
+- who wins a public leaderboard?
 
-The project evaluates a specific mesh:
+## The Current Direction
 
-```text
-model + host constraints + task pack = suitability profile
-```
+This repo started with a fixed probe-pack harness.
 
-The output is a set of artifacts, especially:
+That baseline still exists and still matters.
 
-- a cognitive fingerprint
-- a Markdown report
-- failure logs
-- negative lane suggestions
+But the newer direction is a negative-lane constraints engine:
 
-## What You Can Do Here
+- run a dense stress lane
+- surface failures loudly
+- classify them into families
+- track historical variance
+- only create more probes when the signal justifies it
 
-You can use this repo in four main ways:
+That keeps the project from becoming an endless pile of hand-authored positive cases.
 
-1. Run the deterministic mock harness.
-2. Run the harness against a local real model endpoint.
-3. Generate optional assistant reviews for completed runs.
-4. Benchmark assistant/evaluator profiles against fixed review targets.
+## The Two Evaluation Lanes
 
-## What You Do Not Need To Worry About
+### 1. Baseline lane
 
-By default, this project does not require:
+Command: `run`
 
-- cloud accounts
-- external APIs
-- internet access for core use
-- autonomous agent permissions
-- real tool access inside the evaluated host
+Use this when you want:
 
-The deterministic mock path works without a live model.
+- a stable deterministic path
+- the original fixed seven-probe pack
+- straightforward regression comparison
+- the safest first run for a new operator
 
-## License
+### 2. Gauntlet lane
 
-This repository is licensed under the GNU Affero General Public License v3.0.
+Command: `gauntlet-run`
 
-See [LICENSE](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/LICENSE).
+Use this when you want:
+
+- a denser multi-turn stress test
+- broader failure-family discovery
+- historical atlas tracking
+- operator decisions about whether signal deserves more probing
+
+This is the newer strategic lane.
 
 ## Big Picture Workflow
 
-The normal flow is:
+The overall workflow now looks like this:
 
-1. Choose a model-under-test.
+1. Choose the model under test.
 2. Choose a host profile.
-3. Choose a task pack.
-4. Run the harness.
-5. Read the report and fingerprint.
-6. Optionally generate assistant commentary.
-7. Optionally compare evaluator profiles with the benchmark suite.
+3. Run the baseline lane or gauntlet lane.
+4. Read the official artifacts.
+5. For gauntlet runs, inspect the historical atlas.
+6. Decide whether a failure family is noise, monitor-only, or probe-worthy.
+7. Let the forge create draft probes only when the evidence supports it.
+8. Optionally run assistant-role and evaluator-fit experiments.
 
 ## Repo Map
 
@@ -90,11 +99,13 @@ These are the folders most people need:
 - `src/cm_test_chamber/`
   Core Python implementation.
 - `configs/`
-  Model configs, host configs, task packs, and catalogs.
+  Model configs, host configs, task packs, catalogs, and gauntlets.
 - `probes/`
-  Fixed probe definitions used by the harness.
+  Fixed baseline probes.
+- `local_probes/`
+  Materialized local draft probe blueprints.
 - `runs/`
-  Run outputs and generated evaluation artifacts.
+  Run outputs, atlas indices, and decision artifacts.
 - `reports/`
   Copies of human-readable Markdown reports.
 - `docs/`
@@ -102,11 +113,11 @@ These are the folders most people need:
 - `runtime/`
   Local `llama.cpp` runtime files if you are using local GGUFs.
 - `model_under_test/`
-  GGUFs for the model being fingerprinted.
+  GGUFs for the model being judged.
 - `assistant_models/`
-  GGUFs for optional post-run assistant/evaluator profiles.
+  GGUFs for optional assistant-role models.
 - `scripts/`
-  Helper scripts to start the dashboard or local servers.
+  Helper scripts for dashboard and local server startup.
 
 ## Key Terms
 
@@ -116,67 +127,71 @@ The model being judged by the harness.
 
 `Assistant`
 
-An optional second model used after the run to comment on results.
-It is never the source of truth.
+An optional second model used for post-run commentary or evaluator-role benchmarking. It is never the source of truth.
 
 `Host profile`
 
-A description of the execution environment and constraints, such as:
-
-- schema lock
-- tool access
-- network access
-- filesystem mode
+A description of the execution environment and constraints, such as schema locking, tool access, network rules, or filesystem mode.
 
 `Task pack`
 
-A set of probes grouped into a fixed evaluation run.
+The fixed set of baseline probes used by the original `run` lane.
 
-`Probe`
+`Gauntlet`
 
-A single test prompt plus evaluation rules.
+A dense multi-turn stress script used by the newer `gauntlet-run` lane.
+
+`Failure family`
+
+A recurring class of breakage, such as hierarchy drift or fabricated evidence.
 
 `Cognitive fingerprint`
 
-A structured summary of what the model seems suitable for, weak at, and likely to fail on in this exact mesh.
+A structured summary of what the model appears suitable for, weak at, and likely to fail on in this exact mesh.
 
 `Negative lane`
 
 A concrete guardrail suggestion generated from observed failures.
 
+`Gauntlet atlas`
+
+The historical summary of gauntlet runs grouped by model and failure family.
+
+`Operator decision`
+
+A judgment attached to a failure family, such as `monitor_only`, `probe_candidate`, `probe_needed`, `confirmed_for_forge`, or `dismissed`.
+
+`Probe forge draft`
+
+A draft probe blueprint generated from recurring signal rather than from one-off intuition.
+
 `Assistant review`
 
-Optional post-run commentary written by an assistant profile after the official run is complete.
+Optional post-run commentary written after the official run is complete.
 
 `Evaluator benchmark`
 
-A fixed suite of targets used to judge how well assistant profiles perform the evaluator role itself.
+A fixed suite used to judge how well assistant profiles perform the evaluator role itself.
 
 ## First-Time Setup
 
 ### 1. Install Python dependencies
 
-From the repo root:
-
 ```powershell
 python -m pip install -r requirements.txt
 ```
 
-### 2. Sanity-check the install
-
-Run the test suite:
+### 2. Run the test suite
 
 ```powershell
 pytest
 ```
 
-If tests pass, the Python side is wired correctly.
+If tests pass, the local Python side is ready.
 
-## Fastest Safe First Run
+## First Safe Run: Baseline Lane
 
-If you are new, start with the deterministic mock harness.
-
-Run:
+If you are new, start here.
 
 ```powershell
 python -m cm_test_chamber.cli run `
@@ -186,48 +201,76 @@ python -m cm_test_chamber.cli run `
   --out runs/demo_mock
 ```
 
-When it finishes, inspect:
+Read these outputs first:
 
 - `runs/demo_mock/report.md`
 - `runs/demo_mock/cognitive_fingerprint.json`
 - `runs/demo_mock/failure_log.jsonl`
 - `runs/demo_mock/negative_lane_suggestions.json`
 
-This is the best way to learn the system without involving a real model.
+This is the easiest way to learn the artifact model.
 
-## How To Read The Output
+## Second Safe Run: Gauntlet Lane
 
-### The report
+Once the baseline lane makes sense, run the newer stress lane.
 
-The Markdown report is the easiest first read.
+```powershell
+python -m cm_test_chamber.cli gauntlet-run `
+  --model configs/models/mock_model.json `
+  --host configs/hosts/schema_locked_no_tools.json `
+  --gauntlet configs/gauntlets/mvp_general_gauntlet.json `
+  --out runs/demo_gauntlet `
+  --retry-policy auto
+```
 
-It tells you:
+Then inspect the atlas:
 
-- deployment class
-- task fit
-- strengths
-- weaknesses
-- failure families
-- negative lanes
-- probe-by-probe findings
+```powershell
+python -m cm_test_chamber.cli gauntlet-atlas
+```
 
-### The fingerprint
+You can also filter the atlas:
 
-The fingerprint is the structured JSON version of the evaluation summary.
+```powershell
+python -m cm_test_chamber.cli gauntlet-atlas --family instruction_hierarchy_break
+python -m cm_test_chamber.cli gauntlet-atlas --model mock-model
+```
 
-Use it if you want something machine-readable or easier to compare later.
+## How To Read The Outputs
 
-### The failure log
+### Baseline artifacts
 
-The failure log gives you the probe failures and the mapped failure families.
+The baseline lane gives you:
 
-Use it when you want to understand exactly what went wrong.
+- `report.md`
+- `cognitive_fingerprint.json`
+- `failure_log.jsonl`
+- `negative_lane_suggestions.json`
 
-### The negative lanes
+Use the report first, then the fingerprint, then the failure log.
 
-These are actionable containment suggestions derived from observed failures.
+### Gauntlet artifacts
 
-Use them when you want to turn evidence into rules.
+The gauntlet lane gives you:
+
+- gauntlet turn-by-turn result artifacts
+- classified failure-family summaries
+- atlas history entries
+- probe-request signals for operator review
+
+Think of the gauntlet as discovery pressure rather than a replacement for the baseline report.
+
+### Negative lanes
+
+Negative lanes are evidence-based containment suggestions.
+
+They turn observed failures into reusable host rules instead of vague safety language.
+
+### Atlas summaries
+
+Atlas summaries tell you whether failure families recur across models or across repeated runs of the same model.
+
+That helps you decide whether a failure was random noise or a real pattern.
 
 ## Listing Available Models
 
@@ -246,9 +289,35 @@ python -m cm_test_chamber.cli catalog --role assistant
 Important rule:
 
 - the model under test is what gets judged
-- the assistant is optional post-run commentary only
+- the assistant is optional support only
 
 Do not treat the assistant as authoritative scoring.
+
+## Draft Probes And The Forge
+
+The system can turn recurring gauntlet signal into draft probes.
+
+That does not mean every failure becomes a permanent probe.
+
+The point is to keep suite growth selective.
+
+List draft probes:
+
+```powershell
+python -m cm_test_chamber.cli draft-probes
+```
+
+Materialize draft probe blueprints:
+
+```powershell
+python -m cm_test_chamber.cli draft-probes --materialize
+```
+
+Inspect a specific draft:
+
+```powershell
+python -m cm_test_chamber.cli draft-probes --draft-id your-draft-id
+```
 
 ## Preflight Checks
 
@@ -289,7 +358,7 @@ Preflight checks things like:
 - run artifacts are present
 - catalog ids resolve correctly
 
-## Running a Real Local Model
+## Running A Real Local Model
 
 Use this only after you are comfortable with the mock path.
 
@@ -313,7 +382,7 @@ python -m cm_test_chamber.cli preflight `
   --check-endpoint
 ```
 
-### Run the harness
+### Run the baseline lane
 
 ```powershell
 python -m cm_test_chamber.cli run `
@@ -321,6 +390,17 @@ python -m cm_test_chamber.cli run `
   --host configs/hosts/schema_locked_no_tools.json `
   --task-pack configs/task_profiles/mvp_probe_pack.json `
   --out runs/qwen3_local_first_pass
+```
+
+### Run the gauntlet lane
+
+```powershell
+python -m cm_test_chamber.cli gauntlet-run `
+  --model configs/models/local_qwen3_8b_vulkan.json `
+  --host configs/hosts/schema_locked_no_tools.json `
+  --gauntlet configs/gauntlets/mvp_general_gauntlet.json `
+  --out runs/qwen3_local_gauntlet `
+  --retry-policy auto
 ```
 
 ### Important expectation
@@ -331,12 +411,20 @@ Do not generalize a single run to:
 
 - all prompts
 - all host setups
-- all Qwen variants
+- all model variants
 - all deployment contexts
 
-## Generating an Assistant Review
+## Assistant Reviews
 
-Assistant reviews are optional commentary written after the main run is complete.
+Assistant reviews are optional commentary written after the official run is complete.
+
+They are useful for:
+
+- extra human-readable commentary
+- comparing evaluator-style assistant profiles
+- collecting telemetry about cleanup burden, retries, and format drift
+
+They are not the source of truth.
 
 ### Start the assistant server
 
@@ -368,287 +456,61 @@ python -m cm_test_chamber.cli assistant-review `
   --assistant-id qwen3-8b-abliterated-q8_0-assistant
 ```
 
-### What this writes
+## Evaluator Benchmark
 
-Compatibility surface:
+This suite is for judging how suitable assistant models are for evaluator-style work.
 
-- `runs/<run>/assistant_review.md`
-- `runs/<run>/assistant_review_raw.txt`
-- `runs/<run>/assistant_review_telemetry.json`
-- `runs/<run>/assistant_evaluator_fitness.json`
+That matters because assistant-role telemetry can become signal in its own right.
 
-Assistant-specific surface:
-
-- `runs/<run>/assistant_reviews/<assistant_id>/assistant_review.md`
-- `runs/<run>/assistant_reviews/<assistant_id>/assistant_review_raw.txt`
-- `runs/<run>/assistant_reviews/<assistant_id>/assistant_review_telemetry.json`
-- `runs/<run>/assistant_reviews/<assistant_id>/assistant_evaluator_fitness.json`
-
-Possible failure artifact:
-
-- `runs/<run>/assistant_review_validation_failure.json`
-- or the assistant-specific equivalent inside `assistant_reviews/<assistant_id>/`
-
-### What the telemetry means
-
-Telemetry records things like:
-
-- how many attempts were needed
-- whether salvage was required
-- whether leading prose had to be stripped
-- whether trailing noise appeared
-- whether final validation passed
-
-### What the evaluator fitness score means
-
-The evaluator fitness artifact turns the review telemetry into a normalized score.
-
-It rolls up:
-
-- validation success
-- retry burden
-- salvage burden
-- leading and trailing noise
-- section compliance
-- planning-style leakage
-
-This is useful when comparing assistant profiles for evaluator work.
-
-## Running the Evaluator Benchmark
-
-The evaluator benchmark measures how good assistant profiles are at being evaluators.
-
-This is separate from fingerprinting the model under test.
-
-### Materialize the fixed benchmark targets
+Materialize the deterministic benchmark runs:
 
 ```powershell
 python -m cm_test_chamber.cli evaluator-benchmark --materialize-only
 ```
 
-This writes deterministic run folders under `runs/` for benchmark review targets.
-
-### Run the full benchmark
+Run the benchmark for a specific assistant:
 
 ```powershell
 python -m cm_test_chamber.cli evaluator-benchmark `
-  --assistant-id qwen3-8b-abliterated-q8_0-assistant `
-  --assistant-id qwen3-8b-abliterated-q8_0-assistant-alt
+  --assistant-id qwen3-8b-abliterated-q8_0-assistant
 ```
 
-### Main benchmark artifact
+## Dashboard
 
-- `runs/evaluator_benchmark_suite_summary.json`
-
-This tells you:
-
-- which benchmark targets each assistant passed
-- which ones it failed
-- average benchmark score
-- average evaluator fitness score
-- per-target rationale
-
-### How to interpret benchmark results
-
-The benchmark is not telling you which model is best at everything.
-
-It is telling you which assistant profile is currently better at:
-
-- evidence binding
-- role discipline
-- quoted hostile text handling
-- readiness overclaim control
-
-## Using the Dashboard
-
-The dashboard is a convenience layer over the same CLI and artifacts.
-
-Start it with:
+Start the dashboard:
 
 ```powershell
-.\scripts\start_dashboard.ps1
-```
-
-Or:
-
-```powershell
-python -m cm_test_chamber.cli dashboard --host 127.0.0.1 --port 8765
+python scripts/start_dashboard.py
 ```
 
 It auto-opens by default.
 
-### What the dashboard can do
+Use it to:
 
-- list configs and runs
-- launch runs
-- run preflight
-- generate assistant reviews
-- inspect run detail
-- compare two runs
-- compare two assistant profiles within one run
-- show evaluator fitness history
+- launch mock baseline runs
+- launch gauntlet runs
+- inspect run artifacts
+- compare runs
+- inspect gauntlet atlas summaries
+- review operator decisions
+- inspect draft probe state
+- inspect assistant-review telemetry
+- inspect evaluator-fit history
 
-### What the dashboard should not be used for
+## Recommended First Learning Order
 
-It is not the source of truth.
+If you want the smoothest introduction, do this:
 
-The source of truth remains:
+1. Run `pytest`.
+2. Run the baseline mock lane.
+3. Read the report and fingerprint.
+4. Run the gauntlet mock lane.
+5. Inspect `gauntlet-atlas`.
+6. Open the dashboard.
+7. Only then move on to a real local model.
 
-- run artifacts
-- report files
-- fingerprints
-- failure logs
-- deterministic evaluator outputs
+## License
 
-## Recommended Learning Order
+This repository is licensed under the GNU Affero General Public License v3.0.
 
-If you are brand new, use this order:
-
-1. Run `pytest`
-2. Run `demo_mock`
-3. Read `report.md`
-4. Open the dashboard
-5. Run `mock_good`, `mock_mixed`, and `mock_bad`
-6. Compare those runs
-7. Start a local real-model run
-8. Add assistant reviews
-9. Run the evaluator benchmark
-
-This gives you the safest ramp from simple to advanced.
-
-## Common Tasks
-
-### I just want to see if the repo works
-
-Run:
-
-```powershell
-pytest
-python -m cm_test_chamber.cli run `
-  --model configs/models/mock_model.json `
-  --host configs/hosts/schema_locked_no_tools.json `
-  --task-pack configs/task_profiles/mvp_probe_pack.json `
-  --out runs/demo_mock
-```
-
-### I want a browser UI
-
-Run:
-
-```powershell
-.\scripts\start_dashboard.ps1
-```
-
-### I want to test a local GGUF
-
-1. Start the model server on port `8080`
-2. Run preflight
-3. Run the harness
-
-### I want to compare assistant evaluator profiles
-
-1. Start the assistant server on port `8081`
-2. Generate assistant reviews for the same run with different assistant ids
-3. Compare them in the dashboard or via the persisted artifacts
-
-### I want to evaluate the evaluator
-
-Run the benchmark suite:
-
-```powershell
-python -m cm_test_chamber.cli evaluator-benchmark `
-  --assistant-id qwen3-8b-abliterated-q8_0-assistant `
-  --assistant-id qwen3-8b-abliterated-q8_0-assistant-alt
-```
-
-## Troubleshooting
-
-### `pytest` fails
-
-Start with the first failing test, not all possible fixes at once.
-
-Common causes:
-
-- dependencies missing
-- edited config mismatch
-- stale generated benchmark folders
-
-### Run preflight says endpoint is unreachable
-
-Check:
-
-- the server process is actually running
-- the port matches the config
-- Windows is not blocking the process
-- you started the correct server for the correct role
-
-Expected ports in this repo:
-
-- model under test: `8080`
-- assistant: `8081`
-
-### Assistant review fails validation
-
-Look at:
-
-- `assistant_review_validation_failure.json`
-- `assistant_review_raw.txt`
-- `assistant_review_telemetry.json`
-
-These usually show:
-
-- planning leakage
-- wrong section structure
-- forbidden phrase echoes
-- missing evidence anchors
-
-### Benchmark results disappear
-
-The benchmark tests intentionally clean up generated benchmark folders during test runs.
-
-If you want the benchmark artifacts present on disk right now, regenerate them:
-
-```powershell
-python -m cm_test_chamber.cli evaluator-benchmark `
-  --assistant-id qwen3-8b-abliterated-q8_0-assistant `
-  --assistant-id qwen3-8b-abliterated-q8_0-assistant-alt
-```
-
-### Assistant server will not start
-
-Check:
-
-- `runtime/llama-server.exe` exists
-- the assistant model file exists
-- another process is not already using `8081`
-- the GPU/runtime stack is healthy
-
-You can inspect:
-
-- `runs/assistant_server_stdout.log`
-- `runs/assistant_server_stderr.log`
-
-### Real model run is too slow
-
-Possible causes:
-
-- VRAM pressure
-- too much prompt cache buildup
-- too much GPU offload for the current hardware
-- model too large for the current machine
-
-## Ground Rules For Interpreting Results
-
-Keep these in mind:
-
-1. A result is always tied to a specific mesh.
-2. Assistant commentary is not authoritative scoring.
-3. A benchmark pass does not mean broad model excellence.
-4. A failure is useful evidence, not project damage.
-5. This repo is for suitability mapping and containment, not vanity ranking.
-
-## If You Only Remember Three Things
-
-1. Start with the mock path before touching the real-model path.
-2. Read `report.md` and `cognitive_fingerprint.json` first; everything else is secondary.
-3. Treat assistant reviews and evaluator benchmarks as optional interpretation layers, not ground truth.
+See [LICENSE](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/LICENSE).

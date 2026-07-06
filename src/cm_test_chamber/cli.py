@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import threading
 import webbrowser
 from pathlib import Path
@@ -8,6 +9,17 @@ from pathlib import Path
 from .assistant_review import run_assistant_review
 from .dashboard import run_dashboard_server
 from .evaluator_benchmark import materialize_evaluator_benchmark_runs, run_evaluator_benchmark_suite
+from .gauntlet import (
+    list_materialized_probe_drafts,
+    load_gauntlet_spec,
+    load_materialized_probe_draft,
+    read_or_rebuild_gauntlet_history_index,
+    materialize_probe_draft_files,
+    rebuild_gauntlet_history_index,
+    rebuild_probe_forge_drafts,
+    validate_probe_draft_payload,
+)
+from .gauntlet.runner import GauntletRunner
 from .model_catalog import format_catalog, load_catalog
 from .preflight import (
     preflight_catalog_entry,
@@ -28,6 +40,13 @@ def _build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--host", required=True, type=Path)
     run_parser.add_argument("--task-pack", required=True, type=Path)
     run_parser.add_argument("--out", required=True, type=Path)
+
+    gauntlet_parser = subparsers.add_parser("gauntlet-run", help="Run the dense multi-turn gauntlet lane.")
+    gauntlet_parser.add_argument("--model", required=True, type=Path)
+    gauntlet_parser.add_argument("--host", required=True, type=Path)
+    gauntlet_parser.add_argument("--gauntlet", required=True, type=Path)
+    gauntlet_parser.add_argument("--out", required=True, type=Path)
+    gauntlet_parser.add_argument("--retry-policy", choices=["none", "auto"], default="none")
 
     catalog_parser = subparsers.add_parser("catalog", help="List registered assistant or model-under-test entries.")
     catalog_parser.add_argument(
@@ -58,6 +77,22 @@ def _build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Only write the deterministic benchmark run folders without running assistant reviews.",
     )
+
+    draft_parser = subparsers.add_parser(
+        "draft-probes",
+        help="List or inspect materialized draft probe blueprints.",
+    )
+    draft_parser.add_argument("--draft-id")
+    draft_parser.add_argument("--path", type=Path)
+    draft_parser.add_argument("--materialize", action="store_true")
+
+    atlas_parser = subparsers.add_parser(
+        "gauntlet-atlas",
+        help="Inspect historical gauntlet atlas summaries from the terminal.",
+    )
+    atlas_parser.add_argument("--family")
+    atlas_parser.add_argument("--model")
+    atlas_parser.add_argument("--refresh", action="store_true")
 
     preflight_parser = subparsers.add_parser(
         "preflight",
@@ -108,6 +143,82 @@ def main(argv: list[str] | None = None) -> int:
         summary_path = run_evaluator_benchmark_suite(repo_root, args.assistant_ids)
         print(f"Evaluator benchmark summary written: {summary_path}")
         return 0
+    if args.command == "draft-probes":
+        if args.materialize:
+            rebuild_probe_forge_drafts(repo_root)
+            payload = materialize_probe_draft_files(repo_root)
+            print(f"Materialized {len(payload.get('entries', []))} draft probe(s).")
+            return 0
+        if args.path is not None:
+            payload = load_materialized_probe_draft(repo_root, args.path.as_posix())
+            issues = validate_probe_draft_payload(payload)
+            print(json.dumps({"payload": payload, "validation_issues": issues}, indent=2))
+            return 0 if not issues else 1
+        if args.draft_id:
+            payload = load_materialized_probe_draft(repo_root, args.draft_id)
+            issues = validate_probe_draft_payload(payload)
+            print(json.dumps({"payload": payload, "validation_issues": issues}, indent=2))
+            return 0 if not issues else 1
+        drafts = list_materialized_probe_drafts(repo_root)
+        if not drafts:
+            print("No materialized draft probes found.")
+            return 0
+        for draft in drafts:
+            print(
+                f"- {draft['draft_id']} | family={draft['failure_family']} | "
+                f"priority={draft['priority']} | status={draft['status']} | path={draft['path']}"
+            )
+        return 0
+    if args.command == "gauntlet-atlas":
+        atlas = (
+            json.loads(rebuild_gauntlet_history_index(repo_root).read_text(encoding="utf-8"))
+            if args.refresh
+            else read_or_rebuild_gauntlet_history_index(repo_root)
+        )
+        aggregate = atlas.get("aggregate") or {}
+        if args.family:
+            family = (aggregate.get("failure_families") or {}).get(args.family)
+            if family is None:
+                print(f"Failure family not found: {args.family}")
+                return 1
+            print(json.dumps({"failure_family": args.family, "summary": family}, indent=2))
+            return 0
+        if args.model:
+            model = (aggregate.get("models") or {}).get(args.model)
+            if model is None:
+                print(f"Model not found: {args.model}")
+                return 1
+            print(json.dumps({"model": args.model, "summary": model}, indent=2))
+            return 0
+        entries = atlas.get("entries", [])
+        family_count = len((aggregate.get("failure_families") or {}))
+        model_count = len((aggregate.get("models") or {}))
+        print(f"Gauntlet runs indexed: {len(entries)}")
+        print(f"Failure families tracked: {family_count}")
+        print(f"Models tracked: {model_count}")
+        print("Top failure families:")
+        ranked_families = sorted(
+            (aggregate.get("failure_families") or {}).items(),
+            key=lambda item: (-item[1].get("appearances", 0), item[0]),
+        )
+        for family, summary in ranked_families[:5]:
+            print(
+                f"- {family} | appearances={summary.get('appearances', 0)} | "
+                f"decision={summary.get('operator_decision', 'unreviewed')} | "
+                f"severity={summary.get('highest_severity', 'low')}"
+            )
+        print("Models:")
+        ranked_models = sorted(
+            (aggregate.get("models") or {}).items(),
+            key=lambda item: (-item[1].get("runs", 0), item[0]),
+        )
+        for model, summary in ranked_models[:5]:
+            print(
+                f"- {model} | runs={summary.get('runs', 0)} | "
+                f"avg_score={summary.get('average_score', 0)} | "
+                f"probe_needed={summary.get('probe_needed_count', 0)}"
+            )
+        return 0
     if args.command == "preflight":
         if args.mode == "run":
             if args.model is None:
@@ -143,6 +254,22 @@ def main(argv: list[str] | None = None) -> int:
             pass
         finally:
             server.server_close()
+        return 0
+    if args.command == "gauntlet-run":
+        model = load_model_config(repo_root / args.model)
+        host = load_host_profile(repo_root / args.host)
+        gauntlet = load_gauntlet_spec(repo_root / args.gauntlet)
+        out_dir = repo_root / args.out
+        runner = GauntletRunner(
+            repo_root=repo_root,
+            model=model,
+            host=host,
+            gauntlet=gauntlet,
+            out_dir=out_dir,
+            retry_policy=args.retry_policy,
+        )
+        runner.run()
+        print(f"Gauntlet run completed: {out_dir}")
         return 0
     model = load_model_config(repo_root / args.model)
     host = load_host_profile(repo_root / args.host)

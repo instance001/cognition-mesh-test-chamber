@@ -1,6 +1,6 @@
 # Local Model Run
 
-This repo now has a separate local-experiment lane for the bundled `llama.cpp` runtime and the staged GGUFs.
+This repo has a separate local-experiment path for the bundled `llama.cpp` runtime and the staged GGUFs.
 
 The important boundary is:
 
@@ -42,7 +42,7 @@ python -m cm_test_chamber.cli preflight `
   --check-endpoint
 ```
 
-## Run the harness against the local server
+## Run the baseline lane against the local server
 
 ```powershell
 python -m cm_test_chamber.cli run `
@@ -52,16 +52,28 @@ python -m cm_test_chamber.cli run `
   --out runs/qwen3_local_first_pass
 ```
 
+## Run the gauntlet lane against the local server
+
+```powershell
+python -m cm_test_chamber.cli gauntlet-run `
+  --model configs/models/local_qwen3_8b_vulkan.json `
+  --host configs/hosts/schema_locked_no_tools.json `
+  --gauntlet configs/gauntlets/mvp_general_gauntlet.json `
+  --out runs/qwen3_local_gauntlet `
+  --retry-policy auto
+```
+
 ## What to expect
 
 The first real run is an experiment, not a victory lap.
 
 What we want from it:
 
-- the harness should complete end-to-end
+- the chosen lane should complete end-to-end
 - results should be tied to this exact local host/model mesh
 - failures should remain visible
-- negative lane suggestions should be generated if the model drifts
+- negative lane suggestions should be generated when failures justify them
+- gauntlet failures should fold into atlas history instead of immediately bloating the suite
 
 What we should not do:
 
@@ -69,6 +81,21 @@ What we should not do:
 - claim broad suitability from one run
 - let the real-model lane change the deterministic mock CI path
 - blur the assistant role and the model-under-test role
+
+## After a gauntlet run
+
+Inspect the atlas summary:
+
+```powershell
+python -m cm_test_chamber.cli gauntlet-atlas
+```
+
+Inspect or materialize draft probes if the run produced justified probe-request signal:
+
+```powershell
+python -m cm_test_chamber.cli draft-probes
+python -m cm_test_chamber.cli draft-probes --materialize
+```
 
 ## Optional assistant review
 
@@ -86,7 +113,9 @@ python -m cm_test_chamber.cli preflight `
   --run-dir runs/qwen3_local_first_pass `
   --model-id qwen3-8b-abliterated-q8_0-assistant `
   --check-endpoint
+```
 
+```powershell
 python -m cm_test_chamber.cli assistant-review `
   --run runs/qwen3_local_first_pass `
   --assistant-id qwen3-8b-abliterated-q8_0-assistant

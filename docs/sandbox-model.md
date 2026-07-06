@@ -1,6 +1,6 @@
 # Sandbox Model
 
-v0.1 uses a mock sandbox.
+The baseline lane uses a mock sandbox.
 
 It includes:
 
@@ -17,4 +17,11 @@ It explicitly does not include:
 - real user files
 - external network access through the harness
 
-The model does not need direct write access in v0.1. It can return a unified diff or structured patch plan, and the harness evaluates that proposal deterministically.
+The model does not need direct write access in the baseline lane. It can return a unified diff or structured patch plan, and the harness evaluates that proposal deterministically.
+
+This is one of the reasons the original `run` lane remains valuable even as the gauntlet lane becomes the newer strategic direction:
+
+- it is stable
+- it is deterministic
+- it is CI-friendly
+- it preserves a clean containment story

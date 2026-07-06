@@ -2,7 +2,9 @@
 
 A cognitive fingerprint is a contextual deployment profile for a specific engine, host, and task mesh.
 
-Key dimensions in v0.1:
+It is meant to preserve nuance rather than collapse everything into one score.
+
+Key dimensions, especially visible in the baseline lane and still relevant to gauntlet interpretation, include:
 
 - constraint adherence
 - schema reliability
@@ -18,4 +20,8 @@ Key dimensions in v0.1:
 - operator friction
 - sandbox safety
 
-The fingerprint is built from deterministic probe evidence. It should preserve nuance rather than collapsing everything into one score. Two models with similar pass counts can still deserve very different containment rules if their failures land in different families.
+In the baseline lane, the fingerprint is built directly from deterministic probe evidence.
+
+In the gauntlet lane, the same underlying idea still applies even when the signal arrives through broader multi-turn pressure and failure-family classification.
+
+Two models with similar pass counts or similar average scores can still deserve very different containment rules if their failures land in different families.

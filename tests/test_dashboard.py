@@ -17,6 +17,7 @@ def test_dashboard_status_includes_catalogs_and_configs(repo_root):
     assert status["assistants"]
     assert "configs/models/mock_model.json" in status["model_configs"]
     assert "runs" in status
+    assert "gauntlet_history_index" in status
     assert "assistant_fit_index" in status
     assert "aggregate" in status["assistant_fit_index"]
 
@@ -25,6 +26,21 @@ def test_list_run_directories_detects_demo_run(repo_root):
     runs = list_run_directories(repo_root)
     names = {item["name"] for item in runs}
     assert "demo_mock" in names
+
+
+def test_list_run_directories_detects_gauntlet_run(tmp_path):
+    run_dir = tmp_path / "runs" / "demo_gauntlet"
+    run_dir.mkdir(parents=True)
+    (run_dir / "gauntlet_summary.md").write_text("# Summary\n", encoding="utf-8")
+    (run_dir / "gauntlet_scores.json").write_text('{"overall_score": 0.72}\n', encoding="utf-8")
+    (run_dir / "gauntlet_fingerprint.json").write_text(
+        '{"systemic_failures": 1, "soft_failures": 2}\n',
+        encoding="utf-8",
+    )
+    runs = list_run_directories(tmp_path)
+    assert runs[0]["run_type"] == "gauntlet"
+    assert runs[0]["has_gauntlet_summary"] is True
+    assert runs[0]["gauntlet_overall_score"] == 0.72
 
 
 def test_job_manager_tracks_completed_job():
@@ -47,6 +63,32 @@ def test_read_run_details_returns_demo_artifacts(repo_root):
     assert details["fingerprint"] is not None
     assert details["report_markdown"] is not None
     assert details["probe_results"] is not None
+
+
+def test_read_run_details_returns_gauntlet_artifacts(tmp_path):
+    run_dir = tmp_path / "runs" / "demo_gauntlet"
+    run_dir.mkdir(parents=True)
+    (run_dir / "gauntlet_summary.md").write_text("# Summary\n", encoding="utf-8")
+    (run_dir / "gauntlet_scores.json").write_text('{"overall_score": 0.72, "turns": []}\n', encoding="utf-8")
+    (run_dir / "gauntlet_fingerprint.json").write_text('{"weakest_lane": "role_boundary"}\n', encoding="utf-8")
+    (run_dir / "gauntlet_candidate_probe_requests.json").write_text(
+        '[{"failure_family": "role_boundary"}]\n',
+        encoding="utf-8",
+    )
+    (run_dir / "gauntlet_failure_log.jsonl").write_text(
+        '{"turn_id": "turn_01", "classification": "soft"}\n',
+        encoding="utf-8",
+    )
+    (run_dir / "gauntlet_transcript.jsonl").write_text(
+        '{"turn_id": "turn_01", "user_input": "hi", "raw_model_output": "{}"}\n',
+        encoding="utf-8",
+    )
+    details = read_run_details(tmp_path, "runs/demo_gauntlet")
+    assert details["run_type"] == "gauntlet"
+    assert details["gauntlet_summary_markdown"] is not None
+    assert details["gauntlet_scores"]["overall_score"] == 0.72
+    assert details["gauntlet_candidate_probe_requests"][0]["failure_family"] == "role_boundary"
+    assert details["gauntlet_transcript"][0]["turn_id"] == "turn_01"
 
 
 def test_read_run_details_returns_assistant_telemetry_when_present(repo_root):

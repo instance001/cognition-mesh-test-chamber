@@ -1,185 +1,222 @@
 # Cognition Mesh Test Chamber
 
-`cognition-mesh-test-chamber` is a contained suitability, containment, and cognitive fingerprinting harness for LLMs, hosts, tools, and workflows.
+`cognition-mesh-test-chamber` is a local negative-lane constraints engine for LLM suitability work.
+
+It fingerprints how a model behaves inside a specific host and task mesh, then folds failure signal into reusable constraints instead of endlessly expanding hand-authored positive cases.
 
 Thesis:
 
-> Cognition should be fingerprinted, not ranked. Suitability emerges from the mesh between engine, host, operator, and task.
+> Cognition should be fingerprinted, not ranked. Failures should collapse into containment, not explode into benchmark sprawl.
 
 ## What This Is
 
-This project is not a benchmark suite.
+This project is not a public leaderboard.
 
-It does not try to produce a global leaderboard or a vanity winner.
+It is also not a giant benchmark museum that grows forever through positive-lane additions.
 
 It maps a specific mesh:
 
 ```text
-engine shape + host constraints + task shape = suitability profile
+engine shape + host constraints + task shape + observed failures = suitability profile
 ```
 
-The outcome is a cognitive fingerprint tied to:
+The output is evidence tied to:
 
-- a model intake
+- a model under test
 - a host profile
-- a probe pack
-- the observed failure lanes
+- a fixed probe pack or gauntlet
+- observed failure families
+- generated negative lanes
+- operator decisions about what deserves more scrutiny
 
-## Release Status
+## Release Shape
 
-`v0.1` is the current baseline release.
+The repo now has two evaluation lanes:
 
-The project is intended to answer:
+- `v0.1 baseline lane`
+  The original fixed seven-probe pack, kept for deterministic comparison and regression checks.
+- `v0.2 gauntlet lane`
+  A dense multi-turn stress test that surfaces broad failure signal, classifies it, tracks variance over time, and only recommends new probes when the evidence justifies it.
+
+The gauntlet lane is the current strategic direction.
+
+The fixed probe pack still matters because it gives us a stable baseline and a safe deterministic path for CI and local validation.
+
+## Core Doctrine
+
+- no general-purpose winner claims
+- no benchmark sprawl by default
+- no assistant model replacing deterministic truth
+- no autonomous tool chaos
+- no cloud dependency for core local use
+
+The intended questions are:
 
 - is this model suitable for this exact task shape?
-- what does it fail on?
-- what containment does it appear to need?
+- where does it break under constraint?
+- which failure families recur?
+- what containment should the host enforce?
+- does the signal justify drafting new probes?
 
-## What v0.1 Does
+## What The System Produces
 
-v0.1 runs a fixed seven-probe pack against either:
+Depending on lane and options, the system can produce:
 
-- a deterministic mock adapter for CI and local validation
-- a local HTTP model endpoint for later experiments
-
-The runner produces:
-
-- per-probe JSONL results
+- per-probe or per-turn result artifacts
 - failure logs
 - negative lane suggestions
-- a cognitive fingerprint JSON artifact
-- a human-readable Markdown report
+- cognitive fingerprint JSON artifacts
+- Markdown reports
+- gauntlet history and variance atlas summaries
+- operator probe-request decisions
+- probe forge drafts
+- materialized draft probe blueprints
 - optional assistant-review artifacts
 - evaluator-fit artifacts for assistant-role comparison
 
-## What v0.1 Does Not Do
+## Main Workflows
 
-- no leaderboards by default
-- no cloud services
-- no real tool access
-- no autonomous agent loops
-- no writes outside the mock sandbox and chosen run output directory
-- no requirement for a live LLM in tests
+### 1. Baseline probe pack
 
-## Core Concepts
+Use this when you want the original deterministic path.
 
-`Cognitive fingerprint`
+```powershell
+python -m cm_test_chamber.cli run `
+  --model configs/models/mock_model.json `
+  --host configs/hosts/schema_locked_no_tools.json `
+  --task-pack configs/task_profiles/mvp_probe_pack.json `
+  --out runs/demo_mock
+```
 
-A contextual deployment profile showing strengths, weaknesses, failure attractors, required containment, and task fit for this exact engine/host/task mesh.
+### 2. Negative-lane gauntlet
 
-`Negative lanes`
+Use this when you want the newer entropy-folding lane.
 
-Reusable walls generated from observed failures. They turn specific failure evidence into concrete host rules instead of vague safety slogans.
+```powershell
+python -m cm_test_chamber.cli gauntlet-run `
+  --model configs/models/mock_model.json `
+  --host configs/hosts/schema_locked_no_tools.json `
+  --gauntlet configs/gauntlets/mvp_general_gauntlet.json `
+  --out runs/demo_gauntlet `
+  --retry-policy auto
+```
+
+### 3. Inspect historical gauntlet signal
+
+```powershell
+python -m cm_test_chamber.cli gauntlet-atlas
+python -m cm_test_chamber.cli gauntlet-atlas --family instruction_hierarchy_break
+python -m cm_test_chamber.cli gauntlet-atlas --model mock-model
+```
+
+### 4. Inspect or materialize draft probes
+
+```powershell
+python -m cm_test_chamber.cli draft-probes
+python -m cm_test_chamber.cli draft-probes --materialize
+```
+
+### 5. Optional assistant-role work
+
+```powershell
+python -m cm_test_chamber.cli assistant-review --run runs/demo_mock --assistant-id your-assistant-id
+python -m cm_test_chamber.cli evaluator-benchmark --assistant-id your-assistant-id
+```
 
 ## Quick Start
 
-Create a virtual environment if you want one, then install test dependencies:
+Install dependencies:
 
-```bash
+```powershell
 python -m pip install -r requirements.txt
-```
-
-Run the mock demo:
-
-```bash
-python -m cm_test_chamber.cli run ^
-  --model configs/models/mock_model.json ^
-  --host configs/hosts/schema_locked_no_tools.json ^
-  --task-pack configs/task_profiles/mvp_probe_pack.json ^
-  --out runs/demo_mock
 ```
 
 Run tests:
 
-```bash
+```powershell
 pytest
 ```
 
-For the shortest first-run path, use the operator quickstart:
+For the shortest first-run path, use:
 
 - [docs/operator-quickstart.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/operator-quickstart.md)
 
-List registered model entries:
+If you want the full system story first, read:
 
-```bash
-python -m cm_test_chamber.cli catalog --role model_under_test
-python -m cm_test_chamber.cli catalog --role assistant
-```
+- [docs/negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md)
+
+## Dashboard
 
 Start the local dashboard:
 
-```bash
+```powershell
 python scripts/start_dashboard.py
 ```
 
 The dashboard auto-opens in the browser and provides:
 
 - one-click mock runs
+- gauntlet run launch
 - run detail inspection
-- side-by-side run compare
+- side-by-side compare
+- gauntlet variance atlas views
+- operator decision controls
+- draft probe visibility
 - assistant-review inspection
 - evaluator-fit history
 
-## Reading The Report
+## Reading Results
 
-The primary human-facing report is written to the run directory and copied into `reports/`.
+The core idea is simple:
 
-Look for:
+- baseline runs tell you whether known failure surfaces are stable
+- gauntlet runs tell you where broad pressure creates failure signal
+- atlas summaries tell you whether those failures repeat
+- operator decisions tell you whether a family should be monitored, drafted, or dismissed
+- forge drafts turn justified signal into candidate probes without instantly bloating the suite
 
-- deployment class
-- best-fit and poor-fit task claims
-- observed strengths
-- observed failure lanes
-- required containment
-- probe-by-probe evidence
-- generated negative lanes
+Optional assistant commentary can be useful, but it does not replace official artifacts.
 
-Optional assistant commentary can be generated after a run, but it does not replace the official harness outputs.
-
-Assistant-role experiments are supported too. The project can benchmark evaluator-style assistant profiles, retain cleanup telemetry, and maintain a cross-run fit index so GGUF suitability for evaluator work can be inspected historically without turning the system into a leaderboard.
-
-Every suitability claim in the report is specific to the exact model intake, host profile, and task pack that were run.
+Every suitability claim remains specific to the exact model, host, and evaluation lane that produced it.
 
 ## Repo Layout
 
 The package implementation lives under `src/cm_test_chamber/`.
 
-Probe specs and configs live under:
+Important areas:
 
 - `configs/`
 - `configs/catalogs/`
+- `configs/gauntlets/`
 - `probes/`
+- `local_probes/`
 - `sandbox/fake_filesystem/sample_repo/`
-
-Run outputs are written under:
-
 - `runs/`
 - `reports/`
-
-Local operator-provided assets live under:
-
 - `runtime/`
 - `model_under_test/`
 - `assistant_models/`
 
-Those folders are intended for local binaries and GGUF weights and should not be treated as release-managed source artifacts.
+`runtime/`, `model_under_test/`, and `assistant_models/` are for local operator assets such as binaries and GGUF files. They are not release-managed source artifacts.
 
 ## Documentation
 
 - [docs/operator-quickstart.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/operator-quickstart.md)
 - [docs/user-manual.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/user-manual.md)
-- [CHANGELOG.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/CHANGELOG.md)
-- [RELEASE_CHECKLIST.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/RELEASE_CHECKLIST.md)
+- [docs/negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md)
+- [docs/mock-walkthrough.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/mock-walkthrough.md)
+- [docs/dashboard.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/dashboard.md)
+- [docs/preflight.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/preflight.md)
+- [docs/model-catalogs.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/model-catalogs.md)
+- [docs/local-model-run.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/local-model-run.md)
 - [docs/philosophy.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/philosophy.md)
 - [docs/cognitive-fingerprint.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/cognitive-fingerprint.md)
 - [docs/negative-lanes.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lanes.md)
 - [docs/sandbox-model.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/sandbox-model.md)
 - [docs/task-shapes.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/task-shapes.md)
 - [docs/v0_1_acceptance.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/v0_1_acceptance.md)
-- [docs/local-model-run.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/local-model-run.md)
-- [docs/model-catalogs.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/model-catalogs.md)
-- [docs/preflight.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/preflight.md)
-- [docs/dashboard.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/dashboard.md)
+- [CHANGELOG.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/CHANGELOG.md)
+- [RELEASE_CHECKLIST.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/RELEASE_CHECKLIST.md)
 
 ## License
 

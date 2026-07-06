@@ -15,8 +15,10 @@ runs/*
 !runs/.gitkeep
 reports/*
 !reports/.gitkeep
+local_probes/*
+!local_probes/.gitkeep
+negative_lanes/generated/*
 
 # Local server logs.
 runs/*_server_stdout.log
 runs/*_server_stderr.log
-
