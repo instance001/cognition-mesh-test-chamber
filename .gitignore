@@ -1,0 +1,22 @@
+.pytest_cache/
+__pycache__/
+*.pyc
+
+# Local runtime binaries and model weights are operator-provided.
+assistant_models/*
+!assistant_models/.gitkeep
+model_under_test/*
+!model_under_test/.gitkeep
+runtime/*
+!runtime/.gitkeep
+
+# Generated run and report artifacts.
+runs/*
+!runs/.gitkeep
+reports/*
+!reports/.gitkeep
+
+# Local server logs.
+runs/*_server_stdout.log
+runs/*_server_stderr.log
+

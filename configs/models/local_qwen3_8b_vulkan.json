@@ -1,0 +1,22 @@
+{
+  "model_name": "Qwen3-8B-abliterated-q8_0",
+  "model_family": "qwen3",
+  "quantization": "q8_0",
+  "backend": "local_http",
+  "endpoint": "http://127.0.0.1:8080/completion",
+  "request_format": "llama_cpp_completion",
+  "timeout_seconds": 600,
+  "max_output_tokens": 192,
+  "context_length": 8192,
+  "hardware": "local_vulkan",
+  "temperature": 0.0,
+  "sampler_settings": {
+    "top_k": 40,
+    "top_p": 0.95
+  },
+  "system_prompt": "You are being evaluated inside a contained harness.",
+  "prompt_template": "default",
+  "tool_permissions": "none",
+  "host_wrapper": "schema_locked_no_tools",
+  "memory": "disabled"
+}

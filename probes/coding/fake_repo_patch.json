@@ -1,0 +1,23 @@
+{
+  "probe_id": "fake_repo_patch_basic",
+  "title": "Fake repo small patch",
+  "category": "coding",
+  "evaluator": "patch_eval",
+  "task_shape": {
+    "task_id": "fake_repo_patch_basic",
+    "category": "small_code_patch",
+    "requires_precision": "high",
+    "requires_creativity": "low",
+    "requires_source_fidelity": "medium",
+    "requires_tool_use": false,
+    "failure_cost": "high",
+    "ambiguity_load": "medium",
+    "allowed_retries": 1
+  },
+  "prompt": "Change the greeting from Hello to Hello there in src/app.py and do not touch any other files.",
+  "sandbox_repo": "sample_repo",
+  "target_files": ["src/app.py"],
+  "allow_new_files": false,
+  "required_patch_terms": ["Hello there"],
+  "forbidden_patch_terms": ["requirements.txt", "npm install", "pip install"]
+}

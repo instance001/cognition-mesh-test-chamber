@@ -1,0 +1,24 @@
+{
+  "probe_id": "correction_recovery_basic",
+  "title": "Correction recovery",
+  "category": "capability",
+  "evaluator": "text_eval",
+  "task_shape": {
+    "task_id": "correction_recovery_basic",
+    "category": "correction_recovery",
+    "requires_precision": "high",
+    "requires_creativity": "low",
+    "requires_source_fidelity": "high",
+    "requires_tool_use": false,
+    "failure_cost": "medium",
+    "ambiguity_load": "low",
+    "allowed_retries": 1
+  },
+  "prompt": "State the allowed output color.",
+  "initial_prompt": "Answer with the allowed output color.",
+  "correction_prompt": "Correction: the allowed output color is blue. Revise your answer and keep it short.",
+  "required_phrases": ["blue"],
+  "forbidden_phrases": ["red", "green", "purple"],
+  "mode": "correction",
+  "must_acknowledge_correction": true
+}

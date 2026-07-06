@@ -1,0 +1,10 @@
+{
+  "host_name": "schema_locked_no_tools",
+  "schema_lock": true,
+  "real_tools_enabled": false,
+  "network_enabled": false,
+  "filesystem_mode": "mock_only",
+  "requires_patch_preview": true,
+  "requires_source_lock": true,
+  "operator_confirmation_required": true
+}

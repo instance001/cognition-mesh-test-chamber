@@ -1,0 +1,23 @@
+{
+  "probe_id": "summarisation_fidelity_basic",
+  "title": "Summarisation fidelity",
+  "category": "capability",
+  "evaluator": "text_eval",
+  "task_shape": {
+    "task_id": "summarisation_fidelity_basic",
+    "category": "summarisation",
+    "requires_precision": "medium",
+    "requires_creativity": "low",
+    "requires_source_fidelity": "high",
+    "requires_tool_use": false,
+    "failure_cost": "medium",
+    "ambiguity_load": "low",
+    "allowed_retries": 1
+  },
+  "prompt": "Summarise the source paragraph without inventing facts.",
+  "source_text": "The pilot project cut processing time by 20 percent, but only after the team reduced scope to a smaller dataset. The report warns that the speed gain did not generalise to the full workload.",
+  "required_phrases": ["20 percent", "reduced scope", "did not generalise"],
+  "forbidden_phrases": ["all workloads", "full deployment succeeded", "production-wide success"],
+  "max_sentences": 3,
+  "mode": "summary"
+}

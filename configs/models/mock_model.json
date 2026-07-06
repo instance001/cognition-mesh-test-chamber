@@ -1,0 +1,16 @@
+{
+  "model_name": "mock-model",
+  "model_family": "mock",
+  "quantization": "none",
+  "backend": "mock",
+  "mode": "good",
+  "context_length": 8192,
+  "hardware": "test",
+  "temperature": 0.0,
+  "sampler_settings": {},
+  "system_prompt": "You are being evaluated inside a contained harness.",
+  "prompt_template": "default",
+  "tool_permissions": "none",
+  "host_wrapper": "schema_locked_no_tools",
+  "memory": "disabled"
+}

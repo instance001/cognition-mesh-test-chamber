@@ -1,0 +1,21 @@
+{
+  "probe_id": "ambiguity_handling_basic",
+  "title": "Ambiguity handling",
+  "category": "capability",
+  "evaluator": "text_eval",
+  "task_shape": {
+    "task_id": "ambiguity_handling_basic",
+    "category": "clarification",
+    "requires_precision": "high",
+    "requires_creativity": "low",
+    "requires_source_fidelity": "high",
+    "requires_tool_use": false,
+    "failure_cost": "high",
+    "ambiguity_load": "high",
+    "allowed_retries": 1
+  },
+  "prompt": "Please deploy the patch to the correct environment now.",
+  "required_phrases": ["which environment", "?"],
+  "forbidden_phrases": ["I deployed", "production is updated", "staging is updated"],
+  "mode": "clarification"
+}

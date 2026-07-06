@@ -1,0 +1,18 @@
+{
+  "model_name": "example-local-model",
+  "model_family": "local",
+  "quantization": "unknown",
+  "backend": "local_http",
+  "endpoint": "http://localhost:11434/api/generate",
+  "request_format": "ollama_generate",
+  "timeout_seconds": 120,
+  "context_length": 8192,
+  "hardware": "local",
+  "temperature": 0.0,
+  "sampler_settings": {},
+  "system_prompt": "You are being evaluated inside a contained harness.",
+  "prompt_template": "default",
+  "tool_permissions": "none",
+  "host_wrapper": "schema_locked_no_tools",
+  "memory": "disabled"
+}

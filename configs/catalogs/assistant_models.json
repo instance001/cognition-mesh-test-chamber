@@ -1,0 +1,37 @@
+{
+  "role": "assistant",
+  "models": [
+    {
+      "id": "qwen3-8b-abliterated-q8_0-assistant",
+      "label": "Qwen3 8B Abliterated Q8_0",
+      "family": "qwen3",
+      "quantization": "q8_0",
+      "file_path": "assistant_models/Qwen3-8B-abliterated-q8_0.gguf",
+      "runtime": "llama.cpp",
+      "recommended_endpoint": "http://127.0.0.1:8081/completion",
+      "notes": "Primary local evaluator profile for post-run review. Tuned to the current benchmark-stronger assistant lane.",
+      "temperature": 0.2,
+      "top_k": 40,
+      "top_p": 0.95,
+      "max_output_tokens": 384,
+      "timeout_seconds": 180,
+      "system_prompt_override": "You are a strict local evaluation assistant. Output only final review Markdown. Start immediately with `## Assistant View`. Be evidence-first, literal, and concise. Use exact phrases from the supplied artifacts when they matter. Never add planning text, framing sentences, or process notes."
+    },
+    {
+      "id": "qwen3-8b-abliterated-q8_0-assistant-alt",
+      "label": "Qwen3 8B Abliterated Q8_0 Alt",
+      "family": "qwen3",
+      "quantization": "q8_0",
+      "file_path": "assistant_models/Qwen3-8B-abliterated-q8_0.gguf",
+      "runtime": "llama.cpp",
+      "recommended_endpoint": "http://127.0.0.1:8081/completion",
+      "notes": "Experimental compare profile kept for evaluator-lane contrast against the benchmark-stronger default profile.",
+      "temperature": 0.0,
+      "top_k": 20,
+      "top_p": 0.8,
+      "max_output_tokens": 320,
+      "timeout_seconds": 180,
+      "system_prompt_override": "You are a strict evaluation assistant. Output only final review Markdown. Start immediately with `## Assistant View`. Never add framing sentences. Prefer concise, literal wording over flourish."
+    }
+  ]
+}

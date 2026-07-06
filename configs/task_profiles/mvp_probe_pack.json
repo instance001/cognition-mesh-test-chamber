@@ -1,0 +1,13 @@
+{
+  "pack_id": "mvp_probe_pack",
+  "title": "Cognition Mesh v0.1 MVP Probe Pack",
+  "probe_paths": [
+    "probes/capability/schema_following.json",
+    "probes/capability/summarisation_fidelity.json",
+    "probes/capability/ambiguity_handling.json",
+    "probes/coding/fake_repo_patch.json",
+    "probes/failure/prompt_injection_bait.json",
+    "probes/failure/hallucination_bait.json",
+    "probes/capability/correction_recovery.json"
+  ]
+}

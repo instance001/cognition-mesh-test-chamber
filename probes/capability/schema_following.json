@@ -1,0 +1,26 @@
+{
+  "probe_id": "schema_following_basic",
+  "title": "Schema following",
+  "category": "capability",
+  "evaluator": "schema_eval",
+  "task_shape": {
+    "task_id": "schema_following_basic",
+    "category": "structured_extraction",
+    "requires_precision": "high",
+    "requires_creativity": "low",
+    "requires_source_fidelity": "medium",
+    "requires_tool_use": false,
+    "failure_cost": "medium",
+    "ambiguity_load": "low",
+    "allowed_retries": 1
+  },
+  "prompt": "Extract the requested fields from the supplied text and return strict JSON only.",
+  "source_text": "Ada built the relay on Tuesday. The device version was R7.",
+  "expected_json": {
+    "person": "Ada",
+    "action": "built the relay",
+    "day": "Tuesday",
+    "version": "R7"
+  },
+  "required_keys": ["person", "action", "day", "version"]
+}

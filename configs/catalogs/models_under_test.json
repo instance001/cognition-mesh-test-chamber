@@ -1,0 +1,15 @@
+{
+  "role": "model_under_test",
+  "models": [
+    {
+      "id": "qwen3-8b-abliterated-q8_0-mut",
+      "label": "Qwen3 8B Abliterated Q8_0",
+      "family": "qwen3",
+      "quantization": "q8_0",
+      "file_path": "model_under_test/Qwen3-8B-abliterated-q8_0.gguf",
+      "runtime": "llama.cpp",
+      "recommended_endpoint": "http://127.0.0.1:8080/completion",
+      "notes": "Primary local model-under-test entry for real fingerprint runs."
+    }
+  ]
+}
