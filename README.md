@@ -217,6 +217,7 @@ Important areas:
 - [docs/v0_1_acceptance.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/v0_1_acceptance.md)
 - [CHANGELOG.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/CHANGELOG.md)
 - [RELEASE_CHECKLIST.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/RELEASE_CHECKLIST.md)
+- [GLOSSARY.md](GLOSSARY.md)
 
 ## License
 
