@@ -48,7 +48,7 @@ The fixed probe pack still matters because it gives us a stable baseline and a s
 - no benchmark sprawl by default
 - no assistant model replacing deterministic truth
 - no autonomous tool chaos
-- no cloud dependency for core local use
+- no cloud dependency for core local use; hosted/model-provider comparisons can be treated as explicit future lanes rather than hidden defaults
 
 The intended questions are:
 
