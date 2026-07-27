@@ -29,6 +29,34 @@ The output is evidence tied to:
 - generated negative lanes
 - operator decisions about what deserves more scrutiny
 
+## Mesh Evaluation Flow
+
+```mermaid
+flowchart LR
+    model["Model under test<br/>local, mock, or configured endpoint"] --> mesh["Cognition mesh<br/>model + host + task shape"]
+    host["Host constraints<br/>tools, schema, sandbox, policy"] --> mesh
+    task["Probe pack or gauntlet<br/>baseline lane or pressure lane"] --> mesh
+
+    mesh --> run["Contained run<br/>safe execution + artifact capture"]
+    run --> failures["Observed failures<br/>schema drift, hallucination, scope break, recovery gaps"]
+    run --> strengths["Observed strengths<br/>stable completions + useful behaviours"]
+    failures --> families["Failure families<br/>recurring patterns across turns or runs"]
+    families --> negative["Negative lanes<br/>containment rules + future probe candidates"]
+    strengths --> fingerprint["Cognitive fingerprint<br/>mesh-specific suitability profile"]
+    negative --> fingerprint
+    fingerprint --> decisions["Operator decisions<br/>monitor, draft probe, dismiss, or contain"]
+    decisions --> atlas["Gauntlet atlas<br/>history + variance over time"]
+    atlas --> task
+
+    classDef input fill:#eef7f2,stroke:#25624f,color:#14231d;
+    classDef runLayer fill:#fff8ec,stroke:#9b5b2e,color:#2a1b10;
+    classDef output fill:#f3f0ea,stroke:#777,color:#333;
+
+    class model,host,task input;
+    class mesh,run,failures,strengths,families runLayer;
+    class negative,fingerprint,decisions,atlas output;
+```
+
 ## Release Shape
 
 The repo now has two evaluation lanes:
