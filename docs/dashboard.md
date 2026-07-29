@@ -196,4 +196,4 @@ That makes it easy to bootstrap the compare view before a real local model run i
 
 For the broader system story, also read:
 
-- [negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md)
+- [negative-lane-engine.md](negative-lane-engine.md)

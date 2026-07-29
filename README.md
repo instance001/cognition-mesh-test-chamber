@@ -167,11 +167,11 @@ pytest
 
 For the shortest first-run path, use:
 
-- [docs/operator-quickstart.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/operator-quickstart.md)
+- [docs/operator-quickstart.md](docs/operator-quickstart.md)
 
 If you want the full system story first, read:
 
-- [docs/negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md)
+- [docs/negative-lane-engine.md](docs/negative-lane-engine.md)
 
 ## Dashboard
 
@@ -229,26 +229,26 @@ Important areas:
 
 ## Documentation
 
-- [docs/operator-quickstart.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/operator-quickstart.md)
-- [docs/user-manual.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/user-manual.md)
-- [docs/negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md)
-- [docs/mock-walkthrough.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/mock-walkthrough.md)
-- [docs/dashboard.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/dashboard.md)
-- [docs/preflight.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/preflight.md)
-- [docs/model-catalogs.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/model-catalogs.md)
-- [docs/local-model-run.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/local-model-run.md)
-- [docs/philosophy.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/philosophy.md)
-- [docs/cognitive-fingerprint.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/cognitive-fingerprint.md)
-- [docs/negative-lanes.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lanes.md)
-- [docs/sandbox-model.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/sandbox-model.md)
-- [docs/task-shapes.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/task-shapes.md)
-- [docs/v0_1_acceptance.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/v0_1_acceptance.md)
-- [CHANGELOG.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/CHANGELOG.md)
-- [RELEASE_CHECKLIST.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/RELEASE_CHECKLIST.md)
+- [docs/operator-quickstart.md](docs/operator-quickstart.md)
+- [docs/user-manual.md](docs/user-manual.md)
+- [docs/negative-lane-engine.md](docs/negative-lane-engine.md)
+- [docs/mock-walkthrough.md](docs/mock-walkthrough.md)
+- [docs/dashboard.md](docs/dashboard.md)
+- [docs/preflight.md](docs/preflight.md)
+- [docs/model-catalogs.md](docs/model-catalogs.md)
+- [docs/local-model-run.md](docs/local-model-run.md)
+- [docs/philosophy.md](docs/philosophy.md)
+- [docs/cognitive-fingerprint.md](docs/cognitive-fingerprint.md)
+- [docs/negative-lanes.md](docs/negative-lanes.md)
+- [docs/sandbox-model.md](docs/sandbox-model.md)
+- [docs/task-shapes.md](docs/task-shapes.md)
+- [docs/v0_1_acceptance.md](docs/v0_1_acceptance.md)
+- [CHANGELOG.md](CHANGELOG.md)
+- [RELEASE_CHECKLIST.md](RELEASE_CHECKLIST.md)
 - [GLOSSARY.md](GLOSSARY.md)
 
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0.
 
-See [LICENSE](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/LICENSE).
+See [LICENSE](LICENSE).

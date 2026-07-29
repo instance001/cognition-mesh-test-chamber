@@ -4,7 +4,7 @@ Use this before tagging or publishing a new release.
 
 ## v0.1 Baseline
 
-- confirm [docs/v0_1_acceptance.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/v0_1_acceptance.md) still matches the intended release scope
+- confirm [docs/v0_1_acceptance.md](docs/v0_1_acceptance.md) still matches the intended release scope
 - run `pytest`
 - run a fresh mock smoke test:
 
@@ -23,8 +23,8 @@ python -m cm_test_chamber.cli run `
   - `cognitive_fingerprint.json`
   - `report.md`
   - `run_config_snapshot.json`
-- verify [README.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/README.md) still gives a correct first-run path
-- verify [docs/operator-quickstart.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/operator-quickstart.md) and [docs/user-manual.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/user-manual.md) still match the actual CLI
+- verify [README.md](README.md) still gives a correct first-run path
+- verify [docs/operator-quickstart.md](docs/operator-quickstart.md) and [docs/user-manual.md](docs/user-manual.md) still match the actual CLI
 - verify the dashboard starts with:
 
 ```powershell
@@ -34,12 +34,12 @@ python scripts/start_dashboard.py
 - verify licensing still points to AGPLv3 in `LICENSE`, `README.md`, and `pyproject.toml`
 - confirm `.gitignore` still excludes local model weights, runtime binaries, caches, logs, and generated run artifacts
 - decide which example artifacts, if any, are intentionally kept for documentation versus regenerated locally
-- update [CHANGELOG.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/CHANGELOG.md)
+- update [CHANGELOG.md](CHANGELOG.md)
 - if releasing publicly, create the git tag and package snapshot from the validated state
 
 ## v0.2 Negative-Lane Engine
 
-- confirm [docs/v0_2_acceptance.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/v0_2_acceptance.md) still matches the intended release scope
+- confirm [docs/v0_2_acceptance.md](docs/v0_2_acceptance.md) still matches the intended release scope
 - run `pytest`
 - run a fresh baseline smoke test:
 
@@ -72,7 +72,7 @@ python -m cm_test_chamber.cli gauntlet-run `
 - confirm the gauntlet smoke run writes the expected gauntlet result artifacts and updates historical atlas state
 - verify `python -m cm_test_chamber.cli gauntlet-atlas` returns a sane summary after the smoke gauntlet run
 - verify `python -m cm_test_chamber.cli draft-probes` and `python -m cm_test_chamber.cli draft-probes --materialize` complete cleanly
-- verify [README.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/README.md), [docs/operator-quickstart.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/operator-quickstart.md), [docs/user-manual.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/user-manual.md), and [docs/negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md) still match the actual CLI and workflow
+- verify [README.md](README.md), [docs/operator-quickstart.md](docs/operator-quickstart.md), [docs/user-manual.md](docs/user-manual.md), and [docs/negative-lane-engine.md](docs/negative-lane-engine.md) still match the actual CLI and workflow
 - verify the dashboard starts with:
 
 ```powershell
@@ -83,5 +83,5 @@ python scripts/start_dashboard.py
 - verify licensing still points to AGPLv3 in `LICENSE`, `README.md`, and `pyproject.toml`
 - confirm `.gitignore` still excludes local model weights, runtime binaries, caches, logs, and generated run artifacts
 - decide which example artifacts, if any, are intentionally kept for documentation versus regenerated locally
-- update [CHANGELOG.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/CHANGELOG.md)
+- update [CHANGELOG.md](CHANGELOG.md)
 - if releasing publicly, create the git tag and package snapshot from the validated state

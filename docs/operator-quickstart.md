@@ -103,14 +103,14 @@ Use it to:
 
 If you want the complete beginner-friendly guide, read:
 
-- [user-manual.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/user-manual.md)
+- [user-manual.md](user-manual.md)
 
 If you want the doctrine behind the new direction, read:
 
-- [negative-lane-engine.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/negative-lane-engine.md)
+- [negative-lane-engine.md](negative-lane-engine.md)
 
 ## License
 
 This repository is licensed under the GNU Affero General Public License v3.0.
 
-See [LICENSE](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/LICENSE).
+See [LICENSE](../LICENSE).

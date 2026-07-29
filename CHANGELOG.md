@@ -16,7 +16,7 @@ Included in this release:
 - extended the dashboard with gauntlet launch, atlas visibility, operator decisions, and draft-probe surfaces
 - kept assistant-review separate from deterministic truth while preserving evaluator-fit benchmarking
 - rewrote the documentation set around the two-lane model and the negative-lane entropy-folding workflow
-- added [docs/v0_2_acceptance.md](C:/Users/User/Desktop/github_portal/cognition-mesh-test-chamber/docs/v0_2_acceptance.md) and updated the release checklist for the new release shape
+- added [docs/v0_2_acceptance.md](docs/v0_2_acceptance.md) and updated the release checklist for the new release shape
 
 ## v0.1.0 - 2026-07-06
 
