@@ -24,8 +24,10 @@ def main() -> int:
     sys.path.insert(0, str(repo_root))
     sys.path.insert(0, str(repo_root / "src"))
 
+    from cm_test_chamber.app_paths import ensure_app_layout
     from cm_test_chamber.dashboard import run_dashboard_server
 
+    ensure_app_layout(repo_root)
     server = run_dashboard_server(repo_root, args.host, args.port)
     dashboard_url = f"http://{args.host}:{args.port}"
     print(f"Dashboard running at {dashboard_url}")

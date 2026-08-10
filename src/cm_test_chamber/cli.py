@@ -21,6 +21,7 @@ from .gauntlet import (
 )
 from .gauntlet.runner import GauntletRunner
 from .model_catalog import format_catalog, load_catalog
+from .app_paths import ensure_app_layout, resolve_app_root
 from .preflight import (
     preflight_catalog_entry,
     preflight_model_config,
@@ -120,9 +121,10 @@ def _build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    repo_root = resolve_app_root()
+    ensure_app_layout(repo_root)
     parser = _build_parser()
     args = parser.parse_args(argv)
-    repo_root = Path(__file__).resolve().parents[2]
     if args.command == "catalog":
         catalog_path = repo_root / "configs" / "catalogs" / (
             "assistant_models.json" if args.role == "assistant" else "models_under_test.json"
