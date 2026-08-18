@@ -8,6 +8,8 @@ Thesis:
 
 > Cognition should be fingerprinted, not ranked. Failures should collapse into containment, not explode into benchmark sprawl.
 
+In this repo, `cognitive fingerprinting` is the project-facing name for observable behavioural suitability profiling. It does not claim access to model-internal cognition, consciousness, personhood, or a stable cognitive essence outside the tested model-host-task mesh.
+
 ## What This Is
 
 This project is not a public leaderboard.

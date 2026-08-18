@@ -4,6 +4,8 @@ A cognitive fingerprint is a contextual deployment profile for a specific engine
 
 It is meant to preserve nuance rather than collapse everything into one score.
 
+The phrase is retained as a readable project term. Its technical meaning here is observable behavioural suitability profiling: evidence about outputs, failures, constraints, and repeatable pressures. It is not a claim about model-internal experience, consciousness, personhood, or substrate-level cognition.
+
 Key dimensions, especially visible in the baseline lane and still relevant to gauntlet interpretation, include:
 
 - constraint adherence
