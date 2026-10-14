@@ -32,3 +32,7 @@ GitHub API licence field at inventory time: `AGPL-3.0`. This is a metadata obser
 ## Evidence and limitations
 
 Evidence: authenticated GitHub API metadata captured by the FMI provenance audit. Contribution, prior art, ownership, contributors, document licensing, relationships, releases, and publication status require human verification.
+
+## Evidence-led lineage position
+
+The README supports an `IMPLEMENTED` bounded evaluation harness: behaviour is observed in a particular model-host-task mesh and recurring observed failures can inform reusable negative-lane constraints. It is not a public leaderboard or an assertion about a model's internal cognition. Do not generalize a suitability profile beyond its recorded host, model, task, probes, and operator decisions.
